@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "staging": "konf-join",
+    "konf-join": "konf-join",
+    "default": "konf-join"
+  },
+  "targets": {},
+  "etags": {}
+}

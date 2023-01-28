@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /activity/{document=**} {
+      allow read;
+    }
+    match /activity/{activityId}/event/{eventId} {
+      allow write: if
+        request.auth != null &&
+        debug(debug(debug(resource.data).diff(debug(request.resource.data)).affectedKeys()).hasOnly(["participants"])) && // only participants affected
+        debug(resource.data.participants.diff(request.resource.data.participants).affectedKeys().hasOnly([request.auth.uid])) && // only uid key affected
+        debug(request.resource.data.participants.size() <= resource.data.limit); // doesn't step over doc limit;
+    }
+  }
+}
