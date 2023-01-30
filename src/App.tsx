@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import './App.css'
 
 import { FirebaseOptions, initializeApp } from 'firebase/app'
 import { connectAuthEmulator, getAuth, EmailAuthProvider, Auth, setPersistence, browserLocalPersistence } from "firebase/auth"
