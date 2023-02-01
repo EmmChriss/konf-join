@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { FirebaseOptions, initializeApp } from 'firebase/app'
 import { connectAuthEmulator, getAuth, EmailAuthProvider, Auth, setPersistence, browserLocalPersistence } from "firebase/auth"
 import { connectFirestoreEmulator, getFirestore, onSnapshot, collection, query,  Query, QuerySnapshot, FirestoreError, orderBy, Timestamp, FirestoreDataConverter, WithFieldValue, QueryDocumentSnapshot, DocumentData, SnapshotOptions,  doc, getDoc, updateDoc } from 'firebase/firestore'
-import { Card, Stack, Button, Container, Box } from '@mui/material'
+import { Card, Stack, Button, Container, Box, TextField } from '@mui/material'
 import { auth as AuthUI }  from 'firebaseui'
 import 'firebaseui/dist/firebaseui.css'
 
@@ -17,7 +17,7 @@ const firebaseConfig: FirebaseOptions = {
 }
 
 const app = initializeApp(firebaseConfig)
-const auth = getAuth(app)
+// const auth = getAuth(app)
 const db = getFirestore(app)
 
 // if (window.location.hostname === "localhost") {
@@ -26,38 +26,43 @@ const db = getFirestore(app)
 //   connectFirestoreEmulator(db, 'localhost', 4402)
 // }
 
-function App() {
-  const [loggedIn, setLoggedIn] = useState(auth.currentUser !== null)
-  const firebaseUIRef = useRef<HTMLDivElement>(null)
+// function App() {
+//   const [loggedIn, setLoggedIn] = useState(auth.currentUser !== null)
+//   const firebaseUIRef = useRef<HTMLDivElement>(null)
 
-  // show login ui if not logged in yet
-  const onceCounter = useRef(false)
-  const showLoginUi = async () => {
-    if (firebaseUIRef.current === null || onceCounter.current)
-      return
-    onceCounter.current = true
+//   // show login ui if not logged in yet
+//   const onceCounter = useRef(false)
+//   const showLoginUi = async () => {
+//     if (firebaseUIRef.current === null || onceCounter.current)
+//       return
+//     onceCounter.current = true
 
-    await setPersistence(auth, browserLocalPersistence)
+//     await setPersistence(auth, browserLocalPersistence)
 
-    var ui = new AuthUI.AuthUI(auth, firebaseConfig.appId);
-    ui.start(firebaseUIRef.current, {
-      signInOptions: [
-        EmailAuthProvider.PROVIDER_ID
-      ],
-      callbacks: {
-        signInSuccessWithAuthResult: () => {
-          setLoggedIn(true)
-          return false
-        }
-      }
-    })
-  }
-  useEffect(() => void showLoginUi(), [firebaseUIRef.current])
+//     var ui = new AuthUI.AuthUI(auth, firebaseConfig.appId);
+//     ui.start(firebaseUIRef.current, {
+//       signInOptions: [
+//         EmailAuthProvider.PROVIDER_ID
+//       ],
+//       callbacks: {
+//         signInSuccessWithAuthResult: () => {
+//           setLoggedIn(true)
+//           return false
+//         }
+//       }
+//     })
+//   }
+//   useEffect(() => void showLoginUi(), [firebaseUIRef.current])
   
-  return (<>
-    {loggedIn && <LoggedInApp /> || <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-around", height: "100%" }} ><div ref={firebaseUIRef} /></div>}
-  </>);
-}
+//   return (<>
+//     {loggedIn && <LoggedInApp /> ||
+//       <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-around", height: "100%" }} >
+//         <div>
+//           <div ref={firebaseUIRef} />
+//         </div>
+//       </div>}
+//   </>);
+// }
 
 function useLiveList<T>(query: Query<T>) {
   const [items, setItems] = useState<T[]>([])
@@ -134,7 +139,37 @@ const activitiesQuery = query(activitiesRef, orderBy('time')).withConverter(acti
 const eventsRef = (activityId: string) => collection(db, 'activity', activityId, 'event')
 const eventsQuery = (activityId: string) => query(eventsRef(activityId)).withConverter(eventConverter)
 
-function LoggedInApp() {
+interface User {
+  email: string,
+  name: string
+}
+
+let user: User = {
+  email: "",
+  name: ""
+}
+
+function App() {
+  const [fixed, setFixed] = useState(false)
+  const [emailInvalid, setEmailInvalid] = useState(false)
+  const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
+
+  const handleEmailOnChange = (el: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    let re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+    setEmail(el.target.value)
+    setEmailInvalid(!re.test(el.target.value))
+  }
+
+  const handleFix = () => {
+    if (email == "" || name == "" || emailInvalid)
+      return
+
+    user = { name, email }
+    setFixed(true)
+  }
+
   const activities = useLiveList(activitiesQuery)
   const filteredActivities = activities.items.filter(a => a).map(a => a!!)
 
@@ -142,10 +177,20 @@ function LoggedInApp() {
     <Container>
       <img src={process.env.PUBLIC_URL + '/logo.png'} style={{ width: "100%" }} />
       <Stack spacing={2} direction="column">
-        {filteredActivities.map(activity => 
-            <ActivityView 
-              activity={activity}
-              />
+        {(fixed) ? (
+          filteredActivities.map((activity: Activity) => 
+              <ActivityView 
+                activity={activity}
+                />
+          )
+        ) : (
+          <Card style={{ padding: "8px" }}>
+            <Stack spacing={2} direction="column">
+              <TextField label="Email" type="email" variant="standard" disabled={fixed} value={email} error={emailInvalid} onChange={handleEmailOnChange} />
+              <TextField label="Név" type="text" variant="standard" disabled={fixed} value={name} onChange={(el) => setName(el.target.value)} />
+              <Button variant="contained" disabled={fixed} onClick={handleFix}>Tovább</Button>
+            </Stack>
+          </Card>
         )}
       </Stack>
     </Container>
@@ -168,7 +213,7 @@ function ActivityView({
     const snapshot = await getDoc(docRef)
 
     const participants: Record<string, true> = snapshot.get("participants") ?? {}
-    participants[auth.currentUser!!.uid] = true
+    participants[user.email] = true
 
     const docData = { participants }
     await updateDoc(docRef, docData)
@@ -179,7 +224,7 @@ function ActivityView({
     const snapshot = await getDoc(docRef)
 
     const participants: Record<string, true> = snapshot.get("participants") ?? {}
-    delete participants[auth.currentUser!!.uid]
+    delete participants[user.email]
 
     const docData = { participants }
     await updateDoc(docRef, docData)
@@ -213,7 +258,7 @@ function EventView({
   joinEvent: (a: Activity, e: Event) => void,
   leaveEvent: (a: Activity, e: Event) => void
 }) {
-  const participating = auth.currentUser!!.uid in event.participants
+  const participating = user.email in event.participants
   const current = Object.keys(event.participants).length
   const limit = event.limit
   const full = Object.keys(event.participants).length == event.limit
