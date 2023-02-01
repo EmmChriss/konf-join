@@ -2,9 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { FirebaseOptions, initializeApp } from 'firebase/app'
 import { connectAuthEmulator, getAuth, EmailAuthProvider, Auth, setPersistence, browserLocalPersistence } from "firebase/auth"
-import { connectFirestoreEmulator, getFirestore, onSnapshot, collection, query,  Query, QuerySnapshot, FirestoreError, orderBy, Timestamp, FirestoreDataConverter, WithFieldValue, QueryDocumentSnapshot, DocumentData, SnapshotOptions,  doc, getDoc, updateDoc } from 'firebase/firestore'
+import { connectFirestoreEmulator, getFirestore, onSnapshot, collection, query,  Query, QuerySnapshot, FirestoreError, orderBy, Timestamp, FirestoreDataConverter, WithFieldValue, QueryDocumentSnapshot, DocumentData, SnapshotOptions,  doc, getDoc, updateDoc, setDoc, addDoc } from 'firebase/firestore'
 import { Card, Stack, Button, Container, Box, TextField } from '@mui/material'
-import { auth as AuthUI }  from 'firebaseui'
 import 'firebaseui/dist/firebaseui.css'
 
 const firebaseConfig: FirebaseOptions = {
@@ -162,11 +161,18 @@ function App() {
     setEmailInvalid(!re.test(el.target.value))
   }
 
-  const handleFix = () => {
+  const handleFix = async () => {
     if (email == "" || name == "" || emailInvalid)
       return
 
     user = { name, email }
+
+    // save user
+    const docPath = collection(db, "users")
+    const document = { name, email }
+
+    await addDoc(docPath, document)
+    
     setFixed(true)
   }
 
