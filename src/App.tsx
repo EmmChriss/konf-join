@@ -3,8 +3,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { FirebaseOptions, initializeApp } from 'firebase/app'
 import { connectAuthEmulator, getAuth, EmailAuthProvider, Auth, setPersistence, browserLocalPersistence } from "firebase/auth"
 import { connectFirestoreEmulator, getFirestore, onSnapshot, collection, query,  Query, QuerySnapshot, FirestoreError, orderBy, Timestamp, FirestoreDataConverter, WithFieldValue, QueryDocumentSnapshot, DocumentData, SnapshotOptions,  doc, getDoc, updateDoc, setDoc, addDoc } from 'firebase/firestore'
-import { Card, Stack, Button, Container, Box, TextField } from '@mui/material'
+import { Card, Stack, Button, Container, Box, TextField, Paper, Divider, Checkbox, FormControlLabel, Switch } from '@mui/material'
 import 'firebaseui/dist/firebaseui.css'
+import { useCookies } from 'react-cookie'
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyBKfd6j3ET9UnO78zoanLzLebZj9NKuYMk",
@@ -153,6 +154,8 @@ function App() {
   const [emailInvalid, setEmailInvalid] = useState(false)
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
+  const [privacy, setPrivacy] = useState(false)
+  const [cookies, setCookie, removeCookie] = useCookies(['accepted-policy'])
 
   const handleEmailOnChange = (el: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     let re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -162,7 +165,7 @@ function App() {
   }
 
   const handleFix = async () => {
-    if (email == "" || name == "" || emailInvalid)
+    if (email == "" || name == "" || emailInvalid || !privacy)
       return
 
     user = { name, email }
@@ -180,9 +183,10 @@ function App() {
   const filteredActivities = activities.items.filter(a => a).map(a => a!!)
 
   return (
-    <Container>
-      <img src={process.env.PUBLIC_URL + '/logo.png'} style={{ width: "100%" }} />
-      <Stack spacing={2} direction="column">
+    <>
+    <Container style={{ height: "100%" }}>
+      {fixed && <img src={process.env.PUBLIC_URL + '/logo.jpg'} style={{ width: "100%" }} />}
+      <Stack spacing={2} direction="column" style={{ height: "100%" }}>
         {(fixed) ? (
           filteredActivities.map((activity: Activity) => 
               <ActivityView 
@@ -190,16 +194,46 @@ function App() {
                 />
           )
         ) : (
-          <Card style={{ padding: "8px" }}>
-            <Stack spacing={2} direction="column">
+          <Card style={{ padding: "2em" }}>
+            <Stack spacing={2} direction="column" style={{ textAlign: "center" }}>
+              <span style={{ fontSize: "2em" }}>Bejelentkezés</span>
               <TextField label="Email" type="email" variant="standard" disabled={fixed} value={email} error={emailInvalid} onChange={handleEmailOnChange} />
               <TextField label="Név" type="text" variant="standard" disabled={fixed} value={name} onChange={(el) => setName(el.target.value)} />
+              <Stack direction="row" style={{ opacity: 0.7, fontSize: "0.8em", alignItems: "center" }}>
+                <Checkbox checked={privacy} onChange={el => setPrivacy(el.target.checked)} color="primary" />
+                Beleegyezek adataim kezelésébe a lenti feltételek szerint
+              </Stack>
               <Button variant="contained" disabled={fixed} onClick={handleFix}>Tovább</Button>
+              <Divider/>
+              <span style={{ opacity: 0.7, fontSize: "0.8em", textAlign: "start" }}>
+                A fenti "Tovább" gombra kattintva hozzájárul a személyes adatai adatkezelő általi kezeléséhez,
+                rendszerezéséhez, tárolásához, felhasználásához, lekérdezéséhez, továbbításához, zárolásához,
+                törléséhez, megsemmisítéséhez, az adat további felhasználásának megakadályozásához.
+                <br/><br/>
+                A hozzájárulását bármikor önkéntesen visszavonhatja, azonban a hozzájárulás visszavonása
+                nem érinti a visszavonás előtti adatkezelés jogszerűségét. Hiányos, ellentmondásos vagy
+                értelmezhetetlen jelölést az Adatkezelőnek a hozzájárulás megtagadásaként kell értelmeznie.
+              </span>
             </Stack>
           </Card>
         )}
       </Stack>
     </Container>
+
+    {cookies["accepted-policy"] ? null : (
+        <Paper style={{ position: "fixed", minWidth: "100%", left: 0, bottom: 0 }}>
+        <Container>
+          <Stack direction="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ padding: "1em" }}>A weboldalon cookiekat használunk. </span>
+              <Stack direction="column">
+                <Button size="small" onClick={() => setCookie("accepted-policy", true)} data-cookie-set="accept" aria-label="Megértettem!">Megértettem!</Button>
+              </Stack>
+          </Stack>
+        </Container>
+        </Paper>
+      )
+    }
+    </>
   )
 }
 
@@ -276,8 +310,8 @@ function EventView({
         <Box style={{ order: 1 }}>
           <span>{current} / {limit}</span>
           {participating ?
-            (<Button onClick={() => leaveEvent(activity, event)}>{"Leave"}</Button>) :
-            (<Button onClick={() => joinEvent(activity, event)} disabled={full}>{"Join"}</Button>)
+            (<Button onClick={() => leaveEvent(activity, event)}>{"Visszamondás"}</Button>) :
+            (<Button onClick={() => joinEvent(activity, event)} disabled={full}>{"Csatlakozás"}</Button>)
           }
         </Box>
       </Stack>
