@@ -168,10 +168,10 @@ function App() {
     user = { name, email }
 
     // save user
-    const docPath = collection(db, "users")
+    const colPath = collection(db, "users")
     const document = { name, email }
 
-    await addDoc(docPath, document)
+    await addDoc(colPath, document)
     
     setFixed(true)
   }
@@ -272,7 +272,7 @@ function EventView({
   return (
     <Card style={{ padding: "8px" }}>
       <Stack direction="row" style={{ justifyContent: "space-between" }}>
-        <Stack direction="column" style={{ justifyContent: "space-around" }}>{event.name}</Stack>
+        <Stack direction="column" style={{ justifyContent: "space-around" }}>{event.author}: {event.name}</Stack>
         <Box style={{ order: 1 }}>
           <span>{current} / {limit}</span>
           {participating ?
