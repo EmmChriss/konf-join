@@ -184,7 +184,7 @@ function App() {
     <>
     <Container style={{ height: "100%" }}>
       {fixed && <img src={process.env.PUBLIC_URL + '/logo.jpg'} style={{ width: "100%" }} />}
-      <Stack spacing={2} direction="column" style={{ height: "100%" }}>
+      <Stack spacing={2} direction="column" style={{ minHeight: "100%", paddingBottom: "30%" }}>
         {(fixed) ? (
           filteredActivities.map((activity: Activity) => 
               <ActivityView 
@@ -269,10 +269,10 @@ function ActivityView({
   }
 
   const date = activity.time.toDate()
-  const minutes = (date.getMinutes() / 10 < 1) ? `0${date.getMinutes()}` : date.getMinutes().toString()
+  const minutes = (date.getMinutes() < 10) ? `0${date.getMinutes()}` : date.getMinutes().toString()
   return (
     <Card style={{ padding: "8px" }} >
-      <span style={{ fontSize: "24px", lineHeight: "1.5em" }}>{date.toDateString()} - {date.getHours()}:{date.getMinutes()}</span>
+      <span style={{ fontSize: "24px", lineHeight: "1.5em" }}>{date.toDateString()} - {minutes}</span>
       <Stack spacing={2} direction="column">
         {filteredEvents.map(event => 
           <EventView
