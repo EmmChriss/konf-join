@@ -112,7 +112,6 @@ interface Event {
 
   name: string,
   author: string,
-  description: string,
 }
 
 const eventConverter: FirestoreDataConverter<Event | undefined> = {
@@ -122,14 +121,13 @@ const eventConverter: FirestoreDataConverter<Event | undefined> = {
     const d = snapshot.data()
     const name = d["name"]
     const author = d["author"]
-    const description = d["description"]
     const participants = d["participants"]
     const limit = d["limit"]
 
-    if (typeof(name) !== 'string' || typeof(author) !== 'string' || typeof(description) !== 'string' || typeof(participants) !== 'object' || typeof(limit) !== 'number')
+    if (typeof(name) !== 'string' || typeof(author) !== 'string' || typeof(participants) !== 'object' || typeof(limit) !== 'number')
       return
 
-    return { id, name, author, description, participants, limit }
+    return { id, name, author, participants, limit }
   }
 }
 
@@ -270,9 +268,11 @@ function ActivityView({
     await updateDoc(docRef, docData)
   }
 
+  const date = activity.time.toDate()
+  const minutes = (date.getMinutes() / 10 < 1) ? `0${date.getMinutes()}` : date.getMinutes().toString()
   return (
     <Card style={{ padding: "8px" }} >
-      <span style={{ fontSize: "24px", lineHeight: "1.5em" }}>{activity.time.toDate().toDateString()}</span>
+      <span style={{ fontSize: "24px", lineHeight: "1.5em" }}>{date.toDateString()} - {date.getHours()}:{date.getMinutes()}</span>
       <Stack spacing={2} direction="column">
         {filteredEvents.map(event => 
           <EventView
