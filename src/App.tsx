@@ -269,10 +269,11 @@ function ActivityView({
   }
 
   const date = activity.time.toDate()
+  const hours = (date.getHours() < 10) ? `0${date.getHours()}` : date.getHours().toString()
   const minutes = (date.getMinutes() < 10) ? `0${date.getMinutes()}` : date.getMinutes().toString()
   return (
     <Card style={{ padding: "8px" }} >
-      <span style={{ fontSize: "24px", lineHeight: "1.5em" }}>{date.toDateString()} - {minutes}</span>
+      <span style={{ fontSize: "24px", lineHeight: "1.5em" }}>{date.toDateString()} {hours}:{minutes}</span>
       <Stack spacing={2} direction="column">
         {filteredEvents.map(event => 
           <EventView
